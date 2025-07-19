@@ -25,7 +25,11 @@ def get_teo_zones_list(client):
         req.from_json_string(json.dumps(params))
 
         resp = client.DescribeZones(req)
-        print(resp.to_json_string())
+        zone_ids = []
+        if resp.Zones:
+            for zone in resp.Zones:
+                zone_ids.append(zone.ZoneId)
+        return zone_ids
 
     except TencentCloudSDKException as err:
         print(err)
@@ -45,7 +49,7 @@ def get_teo_domains_list(client, zoneid):
 
         resp = client.DescribeAccelerationDomains(req)
         # print(resp.to_json_string())
-        print(f"获取所有{zoneid}下加速域名列表完成")
+        print(f"已获取 {zoneid} 下所有加速域名")
         return resp.AccelerationDomains
 
     except TencentCloudSDKException as err:

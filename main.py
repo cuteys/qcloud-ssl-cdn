@@ -241,3 +241,45 @@ if __name__ == "__main__":
                 process_domain_config(SECRETID, SECRETKEY, domain, cert_id)
         else:
             process_domain_config(SECRETID, SECRETKEY, my_domain, cert_id)
+
+    teo_client = teo.get_teo_client_instance(SECRETID, SECRETKEY)
+    
+    teo_zones = teo.get_teo_zones_list(teo_client)
+    
+    zones_to_process = []
+    if config.ZONE_ID:
+        zones_to_process.append(config.ZONE_ID)
+    elif teo_zones:
+        for zone_info in teo_zones:
+            if hasattr(zone_info, 'ZoneId'):
+                zones_to_process.append(zone_info.ZoneId)
+            elif isinstance(zone_info, dict) and 'ZoneId' in zone_info:
+                zones_to_process.append(zone_info['ZoneId'])
+            else:
+                print(f"警告：无法从TEO区域信息中提取ZoneId: {zone_info}")
+
+    if zones_to_process:
+        for zone_id in zones_to_process:
+            print(f"正在获取区域 {zone_id} 下的TEO域名...")
+            teo_domains = teo.get_teo_domains_list(teo_client, zone_id)
+            if teo_domains:
+                for teo_domain_info in teo_domains:
+                    domain_name = None
+                    if hasattr(teo_domain_info, 'DomainName'):
+                        domain_name = teo_domain_info.DomainName
+                    elif isinstance(teo_domain_info, dict) and 'DomainName' in teo_domain_info:
+                        domain_name = teo_domain_info['DomainName']
+                    
+                    if domain_name:
+                        print(f"正在更新TEO域名 {domain_name} (区域: {zone_id}) 的证书...")
+                        run_config_teo(SECRETID, SECRETKEY, zone_id, domain_name, cert_id)
+                    else:
+                        print(f"警告：无法从TEO域名信息中提取域名: {teo_domain_info}")
+            else:
+                print(f"区域 {zone_id} 下没有找到TEO域名")
+    else:
+        print("未找到需要处理的TEO区域或TEO区域配置为空")
+
+    print("\n===================================")
+    print("所有配置任务已执行完毕")
+    print("===================================")
